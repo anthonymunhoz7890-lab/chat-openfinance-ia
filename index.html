@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Consultor IA de Open Finance</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; }
+        #chat-box { border: 1px solid #ccc; padding: 15px; height: 300px; overflow-y: scroll; margin-bottom: 10px; background-color: #f9f9f9; }
+        .message { margin-bottom: 10px; padding: 8px; border-radius: 5px; }
+        .user { text-align: right; background-color: #dcf8c6; }
+        .ia { text-align: left; background-color: #eee; }
+    </style>
+</head>
+<body>
+
+    <h2>🤖 Seu Consultor IA de Open Finance</h2>
+    <div id="chat-box">
+        <div class="message ia">Olá! Sou seu assistente de educação financeira. Pergunte-me sobre qualquer investimento e eu explico o cenário, risco e prazo!</div>
+    </div>
+
+    <input type="text" id="user-input" placeholder="Digite sua pergunta (ex: CDB, LCI, Fundos)" style="width: 80%; padding: 10px;">
+    <button onclick="sendMessage()">Enviar</button>
+
+    <script>
+        function sendMessage() {
+            const inputElement = document.getElementById('user-input');
+            const pergunta = inputElement.value;
+            const chatBox = document.getElementById('chat-box');
+
+            if (pergunta.trim() === "") return;
+
+            // 1. Adiciona a mensagem do usuário
+            chatBox.innerHTML += `<div class="message user">**Você:** ${pergunta}</div>`;
+            inputElement.value = ''; 
+            chatBox.scrollTop = chatBox.scrollHeight; 
+            
+            // Adiciona um loading enquanto espera a resposta
+            const loadingMessage = document.createElement('div');
+            loadingMessage.className = 'message ia';
+            loadingMessage.id = 'loading';
+            loadingMessage.innerHTML = '**IA:** Pensando...';
+            chatBox.appendChild(loadingMessage);
+
+            // 2. Chama a Rota de Chat do Vercel (/api/chat)
+            fetch('/api/chat', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ pergunta: pergunta })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 3. Remove o loading e adiciona a resposta da IA
+                document.getElementById('loading').remove();
+                
+                const iaResponse = data.resposta || data.error;
+                chatBox.innerHTML += `<div class="message ia">**IA:** ${iaResponse}</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                document.getElementById('loading').remove();
+                chatBox.innerHTML += `<div class="message ia">**IA:** Erro ao conectar com o servidor.</div>`;
+            });
+        }
+    </script>
+</body>
+</html>
